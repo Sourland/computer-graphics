@@ -57,30 +57,7 @@ def shade_triangle(img, verts2d, vcolors, shade_t='FLAT'):
         y = verts2d[0,1]
         img[x,y] = np.mean(vcolors, axis = 1)
         return img
-    verts2d = verts2d[verts2d[:, 1].argsort()]
-    edges = {   "AB": np.array([verts2d[0,:], verts2d[1,:]]),
-                "AC": np.array([verts2d[0,:], verts2d[2,:]]),
-                "BC": np.array([verts2d[1,:], verts2d[2,:]])
-            } #Dictionary with points of every edge
-    slope = {  "AB": h.slope(verts2d[0,:], verts2d[1,:]),
-                "AC": h.slope(verts2d[0,:], verts2d[2,:]),
-                "BC": h.slope(verts2d[1,:], verts2d[2,:])
-            } #Dictionary with slopes of every edge
-    min_limits = {  "AB": np.min([verts2d[0,:], verts2d[1,:]], axis = 0),
-                    "AC": np.min([verts2d[0,:], verts2d[2,:]], axis = 0),
-                    "BC": np.min([verts2d[1,:], verts2d[2,:]], axis = 0)
-            } #Dictionary with min x and y for every edge
-    max_limits = {  "AB": np.array([verts2d[0,:], verts2d[1,:]], axis = 0),
-                    "AC": np.array([verts2d[0,:], verts2d[2,:]], axis = 0),
-                    "BC": np.array([verts2d[1,:], verts2d[2,:]], axis = 0)
-                } #dictionary with max x and y for every edge
-    y_min = verts2d[0,1]
-    y_max = verts2d[1,1]
-    flat_color = np.mean(vcolors, axis = 1)
-    for y in range(y_min, y_max):
-        (active_edge1, active_edge2) = h.find_edges(y, (min_limits, max_limits))
-        x1 = x2 = h.find_active_point()
-    return img
+    
 
 def render(verts2d, faces, vcolors, depth, shade_t="FLAT"):
     if shade_t not in ['FLAT', 'GOURAUD']:
@@ -88,7 +65,7 @@ def render(verts2d, faces, vcolors, depth, shade_t="FLAT"):
         return 
     M = N = 512
     image_shape = (M,N,3)
-    img = np.ones(image_shape).astype(int)
+    img = np.ones(image_shape)
     #Average depth of every triangle
     depth_order = np.array(np.mean(depth[faces], axis = 1))
     #Sort triangles by depth

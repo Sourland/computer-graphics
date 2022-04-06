@@ -22,18 +22,14 @@ def slope(point1, point2):
     else:
         return (point1[1]-point2[1])/(point1[0]-point2[0])
 
-def find_edges(y, limits):
-    min_limits = limits[0]
-    max_limits = limits[1]
-    if (y in range(min_limits["AB"][1], max_limits["AB"][1] + 1) and  
-        y in range(min_limits["BC"][1], max_limits["BC"][1] + 1)):
-        return ("AB, BC")
-    elif (y in range(min_limits["AB"][1], max_limits["AB"][1] + 1) and  
-        y in range(min_limits["AC"][1], max_limits["AC"][1] + 1)):
-        return ("AB, AC")
-    elif (y in range(min_limits["AC"][1], max_limits["AC"][1] + 1) and  
-        y in range(min_limits["BC"][1], max_limits["BC"][1] + 1)):
-        return ("AC, BC")
-    else:
-        return None
-    
+def compute_barycentric_coordinates(verts2d, x, y):
+    a = f_ab(x, y, 1, 2, verts2d) / f_ab(verts2d[0,0], verts2d[0,1], 1, 2, verts2d)
+    b = f_ab(x, y, 2, 0, verts2d) / f_ab(verts2d[1,0], verts2d[1,1], 2, 0, verts2d)
+    c = f_ab(x, y, 0, 1, verts2d) / f_ab(verts2d[2,0], verts2d[2,1], 0, 1, verts2d)
+    return a,b,c
+
+def f_ab(x, y, a, b, verts2d):
+    return ((verts2d[a,1] - verts2d[b,1]) * x + 
+    (verts2d[b, 0] - verts2d[a,0]) * y + 
+    verts2d[a, 0] * verts2d[b, 1] - 
+    verts2d[b, 0] * verts2d[a , 1]) 
