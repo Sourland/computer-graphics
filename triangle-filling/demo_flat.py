@@ -14,13 +14,14 @@ faces = np.array(data['faces'])
 depth = np.array(data['depth'])
 verts2d[:,[1,0]] = verts2d[:,[0,1]]
 verts2d = verts2d.astype(int)
-# verts2d = np.array([[1,10],[25,25],[1,1]])
+# verts2d = np.array([[2,30],[20,30],[10,10]])
 # verts2d[:,[1,0]] = verts2d[:,[0,1]]
 # vcolors = np.array([[0.56, 0.32, 0.18],[0.1, 0.99, 0.7], [0.69, 0.42, 0.05]])
+# print(vcolors)
 # img = np.ones((35,35,3))
 # img = cgc.shade_triangle(img, verts2d, vcolors)
 
-img = cgb.render(verts2d, faces, vcolors, depth)
+img = cgc.render(verts2d, faces, vcolors, depth)
 
 plt.imshow(img)
 plt.show()

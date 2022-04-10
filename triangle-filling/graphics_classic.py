@@ -1,22 +1,16 @@
-from cmath import isnan
-from pickle import FALSE
-from turtle import color
-
-from pyparsing import null_debug_action
 import helpers as h
 import numpy as np
+import math
 
 class Edge:
-    def __init__(self, name, start, end, color_start, color_end, slope, is_active):
+    def __init__(self, name, verts, colors, slope, is_active):
         self.name = name
-        self.start = start
-        self.end = end
-        self.color_start = color_start
-        self.color_end = color_end
+        self.verts = verts
+        self.colors = colors
         self.slope = slope
         self.is_active = is_active;
-        self.y_min = min(start[1], end[1])
-        self.y_max = max(start[1], end[1])
+        self.y_min = min(verts[0,1], verts[1,1])
+        self.y_max = max(verts[0,1], verts[1,1])
         
         
 
@@ -74,66 +68,82 @@ def shade_triangle(img, verts2d, vcolors, shade_t='FLAT'):
         y = verts2d[0,1]
         img[x,y] = np.mean(vcolors, axis = 0)
         return img
-    if len(np.unique(verts2d)) < 3:
-        img = bresenham(img, np.unique(verts2d), vcolors, shade_t)
 
+    
 
-    verts2d = verts2d[verts2d[:, 1].argsort()]
-
-    Edge1 = Edge("AB", verts2d[0,:], verts2d[1,:], 
-                vcolors[0,:], vcolors[1,:], 
+    Edge1 = Edge("AB", np.array([verts2d[0,:], verts2d[1,:]]), 
+                np.array([vcolors[0,:], vcolors[1,:]]), 
                 h.slope(verts2d[0,:], verts2d[1,:]), False)
-    Edge2 = Edge("BC", verts2d[1,:], verts2d[2,:], 
-                vcolors[1,:], vcolors[2,:], 
+    Edge2 = Edge("BC", np.array([verts2d[1,:], verts2d[2,:]]), 
+                np.array([vcolors[1,:], vcolors[2,:]]), 
                 h.slope(verts2d[1,:], verts2d[2,:]), False)
-    Edge3 = Edge("AC", verts2d[0,:], verts2d[2,:], 
-                vcolors[0,:], vcolors[2,:], 
+    Edge3 = Edge("AC", np.array([verts2d[0,:], verts2d[2,:]]), 
+                np.array([vcolors[0,:], vcolors[2,:]]), 
                 h.slope(verts2d[0,:], verts2d[2,:]), False)
     y_max = np.array(np.max(verts2d, axis=0))[1]
     y_min = np.array(np.min(verts2d, axis=0))[1]
 
-    horizontal_line = False
-    edges = [Edge1, Edge2, Edge3]
-    if np.isnan(np.sum([Edge1.slope, Edge2.slope, Edge3.slope])):
-        return img
-
-    for edge in edges:
-        if y_min == edge.y_min:
-            if edge.slope != 0:
-                edge.is_active = True;
-        else:
-            horizontal_line = True
     
-    active_edges = [edge for edge in edges if edge.is_active]
-    if not horizontal_line:
-        for vert in verts2d:
-            if vert[1] == y_min:
-                x1 = vert[0]
-                x2 = x1+0.5
-        img[x1, y_min] = np.mean(vcolors, axis = 0)
+    horizontal_line = False
+
+    edges = [Edge1, Edge2, Edge3]
+    #Active Edges
+    active_edges = []
+    i = 0;
+    for i in range(len(edges)):
+        if y_min == edges[i].y_min:
+            if edges[i].slope != 0:
+                edges[i].is_active = True;
+                active_edges.append(i)
+            else:
+                horizontal_line = True
+
+    if len(active_edges) < 2:
+        return img
+    if horizontal_line == False:
+        for i in range(len(verts2d)):
+            if verts2d[i,1] == y_min:
+                x1 = verts2d[i,0]
+                x2 = x1
+        img[int(math.floor(x1 + 0.5)), int(math.floor(y_min + 0.5))] = np.mean(vcolors, axis = 0)
     else:
-        x1, x2, C1, C2 = h.find_active_points(active_edges)
+        if edges[active_edges[0]].verts[0,1] == edges[active_edges[0]].y_max:
+            x1 = edges[active_edges[0]].verts[1,0]
+        else:
+            x1 = edges[active_edges[0]].verts[0,0]
+        if edges[active_edges[1]].verts[0,1] == edges[active_edges[1]].y_max:
+            x2 = edges[active_edges[1]].verts[1,0]
+        else:
+            x2 = edges[active_edges[1]].verts[0,0]
+        
         for x in range(x1,x2+1):
             if shade_t == 'FLAT':
-                img[x,y_min] = np.mean(vcolors, axis = 0)
+                img[int(math.floor(x + 0.5)), int(math.floor(y_min + 0.5))] = np.mean(vcolors, axis = 0)
             else:
-                img[x,y_min] = interpolate_color(x1, x2, x, C1, C2)
-
+                img[int(math.floor(x + 0.5)), int(math.floor(y_min + 0.5))] = interpolate_color(x1, x2, x, C1, C2)
     for y in range(y_min+1, y_max+1):
-        x1 = x1 + 1/active_edges[0].slope
-        x2 = x2 + 1/active_edges[1].slope
         
-        x_min = min(x1, x2)
-        x_max = max(x1, x2)
-        color_A = interpolate_color(active_edges[0].y_min, active_edges[0].y_max, y, active_edges[0].color_start, active_edges[0].color_end)
-        color_B = interpolate_color(active_edges[1].y_min, active_edges[1].y_max, y, active_edges[1].color_start, active_edges[1].color_end)
-        for x in range(int(x_min), int(x_max)+1):
+        if edges[active_edges[0]].slope != float('inf'):
+            x1 = x1 + 1/edges[active_edges[0]].slope
+        if edges[active_edges[1]].slope != float('inf'):
+            x2 = x2 + 1/edges[active_edges[1]].slope
+        
+        color_A = interpolate_color(edges[active_edges[0]].y_min, edges[active_edges[0]].y_max, y, edges[active_edges[0]].colors[0,:], edges[active_edges[0]].colors[1,:])
+        color_B = interpolate_color(edges[active_edges[1]].y_min, edges[active_edges[1]].y_max, y, edges[active_edges[1]].colors[0,:], edges[active_edges[1]].colors[1,:])
+        for x in range(int(min(x1, x2)), int(max(x1, x2))+1):
             if shade_t == 'GOURAUD':
-                img[x,y] = interpolate_color(x1, x2, x, color_A, color_B)
+                img[int(math.floor(x+0.5)), y] = interpolate_color(x1, x2, x, color_A, color_B)
             else:
-                img[x,y] = np.mean(vcolors, axis = 0) 
-        active_edges = h.update_edges(y, edges, active_edges)
+                img[int(math.floor(x+0.5)), y] = np.mean(vcolors, axis = 0) 
         
+        if y == edges[active_edges[0]].y_max:
+            for i in range(len(edges)):
+                if y == edges[i].y_min:
+                    active_edges[0] = i
+        elif y == edges[active_edges[1]].y_max:
+            for i in range(len(edges)):
+                if y == edges[i].y_min:
+                    active_edges[1] = i
     return img
     
     
@@ -157,23 +167,3 @@ def render(verts2d, faces, vcolors, depth, shade_t="FLAT"):
         triangle_vcolors = np.array(vcolors[triangle_vertices_indeces])
         img = shade_triangle(img ,triangle_verts2d, triangle_vcolors, shade_t)
     return img
-
-def bresenham(img, verts2d, vcolors, shade_t):
-    x1, y1 = verts2d[1,:]
-    x2, y2 = verts2d[2,:]
-    m_new = 2 * (y2 - y1)
-    slope_error_new = m_new - (x2 - x1)
-    y=y1
-    for x in range(x1,x2+1):
-        # Add slope to increment angle formed
-        slope_error_new =slope_error_new + m_new
- 
-        # Slope error reached limit, time to
-        # increment y and update slope error.
-        if (slope_error_new >= 0):
-            y=y+1
-            slope_error_new =slope_error_new - 2 * (x2 - x1)
-        if(shade_t == 'GOURAUD'):
-            img[x,y] = interpolate_color(y1, y2, y, vcolors[0,:], vcolors[1,:])
-        else:
-            img[x,y] = np.mean(vcolors, axis = 0) 

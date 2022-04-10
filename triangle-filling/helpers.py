@@ -51,45 +51,28 @@ def current_edges(y, verts2d):
 
 
 def find_active_points(edges):
-    if edges[0].start[1] == edges[0].y_max:
-        x1 = edges[0].end[0]
-        C1 = edges[0].color_end
-    else:
+    if edges[0].start[1] == edges[0].y_min:
         x1 = edges[0].start[0]
         C1 = edges[0].color_start
-    if edges[1].start[1] == edges[1].y_max:
-        x2 = edges[1].end[0]
-        C2 = edges[1].color_end
     else:
+        x1 = edges[0].end[0]
+        C1 = edges[0].color_end
+    if edges[1].start[1] == edges[1].y_min:
         x2 = edges[1].start[0]
         C2 = edges[1].color_start
+    else:
+        x2 = edges[1].end[0]
+        C2 = edges[1].color_end
     return x1, x2, C1, C2
     
 
-def update_edges(y, edges, active_edges):
+def update_edges(y, edges, active_edges, horizontal_line):
     if y == active_edges[0].y_max:
         for edge in edges:
             if y == edge.y_min:
                 active_edges[0] = edge
-    elif y == active_edges[1].y_max:
+    if y == active_edges[1].y_max:
         for edge in edges:
             if y == edge.y_min:
                 active_edges[1] = edge
     return active_edges
-
-def update_points(x1, x2, active_edges, current_y):
-    y1, y2  =active_edges[0].y_max, active_edges[1].y_max
-    x1_end, x2_end = active_edges[1].start[0], active_edges[1].end[0]
-
-    m_new1 = 2*(x1_end-x1)
-    m_new2 = 2*(x2_end-x2)
-    error1 = m_new1 - (y1-current_y)
-    error2 = m_new2 - (y2-current_y)
-
-    if(error1 + m_new1 > 0):
-        x1 +=1
-    if(error2 + m_new2 > 0):
-        x2 +=1
-    return x1,x2
-
-    
