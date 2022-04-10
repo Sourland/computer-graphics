@@ -1,5 +1,5 @@
-import helpers as h
 import numpy as np
+import helpers as h
 
 def interpolate_color(x1, x2, x, C1, C2):
     """Interpolates color C1, C2 of points x1 and x2 to calculate color C of point x
@@ -31,6 +31,7 @@ def interpolate_color(x1, x2, x, C1, C2):
     C[2] = abs(C1[2] + t*(C2[2]-C1[2]))
     return C
 
+
 def shade_triangle(img, verts2d, vcolors, shade_t='FLAT'):
     """Calculates color of a triange with 2 different ways
     -----------
@@ -52,14 +53,58 @@ def shade_triangle(img, verts2d, vcolors, shade_t='FLAT'):
         The final image with the every point of the triangle colored, covering any pre-existing triangle sharing
         a segmentNotImplemented
     """
-    if np.all(verts2d[:,0] == verts2d[0,0]) and np.all(verts2d[:,1] == verts2d[0,1]):
-        x = verts2d[0,0]
-        y = verts2d[0,1]
-        img[x,y] = np.mean(vcolors, axis = 1)
+    if len(np.unique(verts2d)) < 3:
         return img
+    verts2d = verts2d[verts2d[:, 1].argsort()]
+    x_max = np.array(np.max(verts2d, axis=0))[0]
+    x_min = np.array(np.min(verts2d, axis=0))[0]
+    y_max = np.array(np.max(verts2d, axis=0))[1]
+    y_min = np.array(np.min(verts2d, axis=0))[1]
     
+    if shade_t == 'GOURAUD':
+        for y in range(y_min, y_max+1):
+            for x in range(x_min, x_max+1):
+                (a,b,c) = h.compute_barycentric_coordinates(verts2d, x, y)
+                if 0 <= a <= 1 and 0 <= b <= 1 and 0 <= c <= 1:
+                    img[x,y,0] = a*vcolors[0,0] + b*vcolors[1,0] + c*vcolors[2,0] # R1 G1 B1
+                    img[x,y,1] = a*vcolors[0,1] + b*vcolors[1,1] + c*vcolors[2,1] # B1 
+                    img[x,y,2] = a*vcolors[0,2] + b*vcolors[1,2] + c*vcolors[2,2]
+    else:
+        flat_color = np.mean(vcolors, axis = 0)
+        for y in range(y_min, y_max+1):
+            for x in range(x_min, x_max+1):
+                (a,b,c) = h.compute_barycentric_coordinates(verts2d, x, y)
+                if 0 <= a <= 1 and 0 <= b <= 1 and 0 <= c <= 1:
+                    img[x,y] = flat_color
+
+
+    return img
+
+
 
 def render(verts2d, faces, vcolors, depth, shade_t="FLAT"):
+    """Renders a full object using triangle_shading
+    -----------
+    verts2d: Lx2 numpy array 
+        The coordinates for all points of the object
+    faces: Kx3 numpy array:
+        A list of vertices for every triangle
+    vcolors: Lx3 numpy array
+        The color of the vertices in an RGB scale, ranging from [0,1]
+    depth: Lx3 numpy array
+        The depth of each vertice in the camvas
+    shade_t: string
+        The mode of coloring
+            ~FLAT: 
+                The triangle is colored with a single color, the mean of the vertice's RGB values
+            ~GOURAUD:
+                Each pixel inside the triangle is colored based on its position using linear color interpolation
+    Returns:
+    -----------
+    Y: MxNx3 numpy array
+        The final image with the every point of the triangle colored, covering any pre-existing triangle sharing
+        a segmentNotImplemented
+    """
     if shade_t not in ['FLAT', 'GOURAUD']:
         print("Mode not found")
         return 
@@ -78,3 +123,6 @@ def render(verts2d, faces, vcolors, depth, shade_t="FLAT"):
     return img
 
 
+
+
+    
