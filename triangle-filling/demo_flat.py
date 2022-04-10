@@ -13,7 +13,7 @@ faces = np.array(data['faces'])
 depth = np.array(data['depth'])
 verts2d[:,[1,0]] = verts2d[:,[0,1]]
 verts2d = verts2d.astype(int)
-img = cgb.render(verts2d, faces, vcolors, depth)
+img = cgc.render(verts2d, faces, vcolors, depth)
 
 # UNCOMMENT TO RUN BARYCENTRIC IMPLEMENTATION
 #img = cgb.render(verts2d, faces, vcolors, depth)
