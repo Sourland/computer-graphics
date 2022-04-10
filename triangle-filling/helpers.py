@@ -40,39 +40,4 @@ def f_ab(x, y, a, b, verts2d):
     verts2d[a, 0] * verts2d[b, 1] - 
     verts2d[b, 0] * verts2d[a , 1]) 
 
-def current_edges(y, verts2d):
-    y0, y1, y2 = verts2d[0,1], verts2d[1,1], verts2d[2,1]
-    if y0 <= y <= y1 and y0 <= y <= y2:
-        return((0,1), (0,2)) 
-    elif y1 <= y <= y2 and y0 <= y <= y2:
-        return((1,2), (0,2)) 
-    elif y1 <= y <= y2 and y0 <= y <= y1:
-        return((1,2), (0,1)) 
 
-
-def find_active_points(edges):
-    if edges[0].start[1] == edges[0].y_min:
-        x1 = edges[0].start[0]
-        C1 = edges[0].color_start
-    else:
-        x1 = edges[0].end[0]
-        C1 = edges[0].color_end
-    if edges[1].start[1] == edges[1].y_min:
-        x2 = edges[1].start[0]
-        C2 = edges[1].color_start
-    else:
-        x2 = edges[1].end[0]
-        C2 = edges[1].color_end
-    return x1, x2, C1, C2
-    
-
-def update_edges(y, edges, active_edges, horizontal_line):
-    if y == active_edges[0].y_max:
-        for edge in edges:
-            if y == edge.y_min:
-                active_edges[0] = edge
-    if y == active_edges[1].y_max:
-        for edge in edges:
-            if y == edge.y_min:
-                active_edges[1] = edge
-    return active_edges

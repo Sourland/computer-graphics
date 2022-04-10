@@ -20,7 +20,7 @@ verts2d = verts2d.astype(int)
 # img = cgc.shade_triangle(img, verts2d, vcolors)
 
 img = cgc.render(verts2d, faces, vcolors, depth, 'GOURAUD')
-img2 = cgb.render(verts2d, faces, vcolors, depth, 'GOURAUD')
+#img2 = cgb.render(verts2d, faces, vcolors, depth, 'GOURAUD')
 
 print(img)
 plt.imshow(img)
