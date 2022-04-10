@@ -46,4 +46,54 @@ def f_ab(x, y, a, b, verts2d):
     verts2d[a, 0] * verts2d[b, 1] - 
     verts2d[b, 0] * verts2d[a , 1]) 
 
+def find_initial_elements(edges, active_edges):
+    """Calculates initial active points and colors
+    -----------
+    edges: 3x1 Edge array
+        All the edge objects
+    active_edges: 2x1 index array
+        Indexes to the 2 current active edges
+    Returns:
+    -----------
+    x1,x2: int 
+        Initial active points
+    C1, C2: 3x1 numpy array
+        RGB values for initial active_point
+    """
+    if edges[active_edges[0]].verts[0,1] == edges[active_edges[0]].y_max:
+        x1 = edges[active_edges[0]].verts[1,0]
+        C1 =edges[active_edges[0]].colors[1,:]
+    else:
+        x1 = edges[active_edges[0]].verts[0,0]
+        C1 =edges[active_edges[0]].colors[0,:]
+    if edges[active_edges[1]].verts[0,1] == edges[active_edges[1]].y_max:
+        x2 = edges[active_edges[1]].verts[1,0]
+        C2 =edges[active_edges[1]].colors[1,:]
+    else:
+        x2 = edges[active_edges[1]].verts[0,0]
+        C2 =edges[active_edges[1]].colors[0,:]
+    return x1, x2 , C1, C2
 
+def update_active_edges(edges, active_edges, y):
+    """Calculates initial active points and colors
+    -----------
+    edges: 3x1 Edge array
+        All the edge objects
+    active_edges: 2x1 index array
+        Indexes to the 2 current active edges
+    y: int
+        current y scanline
+    Returns:
+    -----------
+    active_edges:2x1 index array
+        The new active edges
+    """
+    if y == edges[active_edges[0]].y_max:
+        for i in range(len(edges)):
+            if y == edges[i].y_min:
+                active_edges[0] = i
+    elif y == edges[active_edges[1]].y_max:
+        for i in range(len(edges)):
+            if y == edges[i].y_min:
+                active_edges[1] = i
+    return active_edges

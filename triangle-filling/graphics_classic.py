@@ -12,8 +12,6 @@ class Edge:
         self.y_min = min(verts[0,1], verts[1,1])
         self.y_max = max(verts[0,1], verts[1,1])
         
-        
-
 def interpolate_color(x1, x2, x, C1, C2):
     """Interpolates color C1, C2 of points x1 and x2 to calculate color C of point x
     Parameters:
@@ -64,6 +62,7 @@ def shade_triangle(img, verts2d, vcolors, shade_t='FLAT'):
         The final image with the every point of the triangle colored, covering any pre-existing triangle sharing
         a segmentNotImplemented
     """
+    #Check for exception
     if np.all(verts2d[:,0] == verts2d[0,0]) and np.all(verts2d[:,1] == verts2d[0,1]):
         x = verts2d[0,0]
         y = verts2d[0,1]
@@ -73,6 +72,7 @@ def shade_triangle(img, verts2d, vcolors, shade_t='FLAT'):
     if len(np.unique(verts2d, axis = 0)) < 3:
         return img
 
+    #Initialize Edge elements
     Edge1 = Edge("AB", np.array([verts2d[0,:], verts2d[1,:]]), 
                 np.array([vcolors[0,:], vcolors[1,:]]), 
                 h.slope(verts2d[0,:], verts2d[1,:]), False)
@@ -82,16 +82,15 @@ def shade_triangle(img, verts2d, vcolors, shade_t='FLAT'):
     Edge3 = Edge("AC", np.array([verts2d[0,:], verts2d[2,:]]), 
                 np.array([vcolors[0,:], vcolors[2,:]]), 
                 h.slope(verts2d[0,:], verts2d[2,:]), False)
+    #Define minimum and maximum y
     y_max = np.array(np.max(verts2d, axis=0))[1]
     y_min = np.array(np.min(verts2d, axis=0))[1]
 
-    
-    horizontal_line = False
-
+    #Initialize search parametrs
     edges = [Edge1, Edge2, Edge3]
-    #Active Edges
     active_edges = []
-    i = 0;
+    horizontal_line = False
+    #Begin search for initial elements
     for i in range(len(edges)):
         if y_min == edges[i].y_min:
             if edges[i].slope != 0:
@@ -99,7 +98,8 @@ def shade_triangle(img, verts2d, vcolors, shade_t='FLAT'):
                 active_edges.append(i)
             else:
                 horizontal_line = True
-
+    
+    #Act based on active edge findings
     if len(active_edges) < 2:
         return img
     if horizontal_line == False:
@@ -110,56 +110,53 @@ def shade_triangle(img, verts2d, vcolors, shade_t='FLAT'):
                 x2 = x1
         img[int(math.floor(x1 + 0.5)), int(math.floor(y_min + 0.5))] = vcolors[index, :]
     else:
-        if edges[active_edges[0]].verts[0,1] == edges[active_edges[0]].y_max:
-            x1 = edges[active_edges[0]].verts[1,0]
-            C1 =edges[active_edges[0]].colors[1,:]
-        else:
-            x1 = edges[active_edges[0]].verts[0,0]
-            C1 =edges[active_edges[0]].colors[0,:]
-        if edges[active_edges[1]].verts[0,1] == edges[active_edges[1]].y_max:
-            x2 = edges[active_edges[1]].verts[1,0]
-            C2 =edges[active_edges[1]].colors[1,:]
-        else:
-            x2 = edges[active_edges[1]].verts[0,0]
-            C2 =edges[active_edges[1]].colors[0,:]
-        
+        x1,x2,C1,C2 = h.find_initial_elements(edges, active_edges)
         for x in range(x1,x2+1):
             if shade_t == 'FLAT':
                 img[x,y_min] = np.mean(vcolors, axis = 0)
             else:
-                img[x,y_min] = interpolate_color(x1, x2, x, C1, C2)
-                
+                img[x,y_min] = interpolate_color(x1, x2, x, C1, C2)  
+    #Individual cases over
+
+    #Begin Scanline Algorithm
     for y in range(y_min+1, y_max+1):
-        
         if edges[active_edges[0]].slope != float('inf'):
             x1 = x1 + 1/edges[active_edges[0]].slope
         if edges[active_edges[1]].slope != float('inf'):
-            x2 = x2 + 1/edges[active_edges[1]].slope
-        
+            x2 = x2 + 1/edges[active_edges[1]].slope 
         color_A = interpolate_color(edges[active_edges[0]].y_min, edges[active_edges[0]].y_max, y, edges[active_edges[0]].colors[0,:], edges[active_edges[0]].colors[1,:])
         color_B = interpolate_color(edges[active_edges[1]].y_min, edges[active_edges[1]].y_max, y, edges[active_edges[1]].colors[0,:], edges[active_edges[1]].colors[1,:])
         for x in range(int(min(x1, x2)), int(max(x1, x2))+1):
             if shade_t == 'GOURAUD':
                 img[int(math.floor(x+0.5)), y] = interpolate_color(int(x1), int(x2), int(math.floor(x+0.5)), color_A, color_B)
-            
             else:
                 img[int(math.floor(x+0.5)), y] = np.mean(vcolors, axis = 0) 
-        
-        if y == edges[active_edges[0]].y_max:
-            for i in range(len(edges)):
-                if y == edges[i].y_min:
-                    active_edges[0] = i
-        elif y == edges[active_edges[1]].y_max:
-            for i in range(len(edges)):
-                if y == edges[i].y_min:
-                    active_edges[1] = i
+        active_edges = h.update_active_edges(edges, active_edges, y)
     return img
-    
-    
-    
-    
 
 def render(verts2d, faces, vcolors, depth, shade_t="FLAT"):
+    """Renders a full object using triangle_shading
+    -----------
+    verts2d: Lx2 numpy array 
+        The coordinates for all points of the object
+    faces: Kx3 numpy array:
+        A list of vertices for every triangle
+    vcolors: Lx3 numpy array
+        The color of the vertices in an RGB scale, ranging from [0,1]
+    depth: Lx3 numpy array
+        The depth of each vertice in the camvas
+    shade_t: string
+        The mode of coloring
+            ~FLAT: 
+                The triangle is colored with a single color, the mean of the vertice's RGB values
+            ~GOURAUD:
+                Each pixel inside the triangle is colored based on its position using linear color interpolation
+    Returns:
+    -----------
+    Y: MxNx3 numpy array
+        The final image with the every point of the triangle colored, covering any pre-existing triangle sharing
+        a segmentNotImplemented
+    """
     if shade_t not in ['FLAT', 'GOURAUD']:
         print("Mode not found")
         return 
