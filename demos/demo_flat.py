@@ -1,9 +1,9 @@
-
 import numpy as np
-import graphics_barycentric as cgb
-import graphics_classic as cgc
+import rendering.scanline_rendering as scanline
+import rendering.simplex_rendering as simplex
 import matplotlib.pyplot as plt
-data = np.load("hw1.npy", allow_pickle=True).tolist()
+
+data = np.load("../rendering/hw1.npy", allow_pickle=True).tolist()
 data = dict(data)
 
 
@@ -13,10 +13,11 @@ faces = np.array(data['faces'])
 depth = np.array(data['depth'])
 verts2d[:,[1,0]] = verts2d[:,[0,1]]
 verts2d = verts2d.astype(int)
-img = cgc.render(verts2d, faces, vcolors, depth)
+img = scanline.render(verts2d, faces, vcolors, depth)
 
 # UNCOMMENT TO RUN BARYCENTRIC IMPLEMENTATION
-#img = cgb.render(verts2d, faces, vcolors, depth)
+#img = simplex.render(verts2d, faces, vcolors, depth)
+
 
 
 plt.imshow(img)

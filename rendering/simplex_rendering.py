@@ -1,5 +1,5 @@
 import numpy as np
-import helpers as h
+from rendering import helpers as h
 
 def interpolate_color(x1, x2, x, C1, C2):
     """Interpolates color C1, C2 of points x1 and x2 to calculate color C of point x
