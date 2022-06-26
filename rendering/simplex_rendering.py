@@ -121,8 +121,3 @@ def render(verts2d, faces, vcolors, depth, shade_t="FLAT"):
         triangle_vcolors = np.array(vcolors[triangle_vertices_indeces])
         img = shade_triangle(img ,triangle_verts2d, triangle_vcolors, shade_t)
     return img
-
-
-
-
-    

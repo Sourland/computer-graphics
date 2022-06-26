@@ -105,7 +105,7 @@ def shade_triangle(img, verts2d, vcolors, shade_t='FLAT'):
     # Act based on active edge findings
     if len(active_edges) < 2:
         return img
-    if horizontal_line == False:
+    if not horizontal_line:
         for i in range(len(verts2d)):
             if verts2d[i, 1] == y_min:
                 index = i

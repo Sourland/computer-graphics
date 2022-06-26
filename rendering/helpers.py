@@ -1,7 +1,7 @@
 import numpy as np
+from numpy import linalg as la
 
-inside = lambda x, y, slopes, b: False if slopes[0] * x + y + b[0] < 0 and slopes[1] * x + y + b[1] < 0 and slopes[
-    2] * x + y + b[2] < 0 else True
+inside = lambda x, y, slopes, b: False if slopes[0] * x + y + b[0] < 0 and slopes[1] * x + y + b[1] < 0 and slopes[2] * x + y + b[2] < 0 else True
 
 
 def slope(point1, point2):
@@ -130,3 +130,24 @@ def swap(a, b):
     a = b
     b = temp
     return a, b
+
+
+def calculate_normals(vertices, face_indices):
+    """
+    Calculates the normal surface vectors
+
+    :param vertices: a 3 × N matrix with the coordinates of the vertices of the object.
+    :param face_indices: a 3×N matrix describing the triangles
+    :return: A 3 × N matrix with the coordinates of the vertical vectors in each point (vertex) of the surface defining the object
+    """
+
+    N_vectors = np.zeros(vertices.shape)
+
+    for face_index in face_indices:
+        triange_vertices = triange_vertices[face_index]
+        AB_vector = triange_vertices[1] - triange_vertices[0]
+        AC_vector = triange_vertices[2] - triange_vertices[0]
+        N = np.cross(AB_vector, AC_vector) / la.norm(np.cross(AB_vector, AC_vector))
+        N_vectors[face_index] = N
+
+    return N_vectors
