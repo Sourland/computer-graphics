@@ -3,7 +3,7 @@ import rendering.scanline_rendering as scanline
 import rendering.simplex_rendering as simplex
 import matplotlib.pyplot as plt
 
-data = np.load("../rendering/hw1.npy", allow_pickle=True).tolist()
+data = np.load("../materials/hw1.npy", allow_pickle=True).tolist()
 data = dict(data)
 
 

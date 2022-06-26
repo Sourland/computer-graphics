@@ -1,4 +1,3 @@
-import numpy
 import numpy as np
 import transformations.transform as tra
 from numpy import linalg as la
@@ -47,7 +46,7 @@ def project_cam_lookat(c_org, c_lookat, c_up, verts_3d, f=1):
     c_z = c_lookat / la.norm(c_lookat)
     t = np.array(c_up - np.dot(c_up, c_z) * c_z)
     c_y = t / la.norm(t)
-    c_x = numpy.cross(c_y, c_z)
+    c_x = np.cross(c_y, c_z)
     c_x, c_y, c_z = h.casting(c_x, c_y, c_z)
     return project_cam(c_org, c_x, c_y, c_z, verts_3d, f)
 

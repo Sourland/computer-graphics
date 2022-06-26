@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from rendering import nD_rendering as nD
 from transformations.transform import affine_transform
 
-data = np.load("../transformations/hw2.npy", allow_pickle=True).tolist()
+data = np.load("../materials/hw2.npy", allow_pickle=True).tolist()
 verts_3d = np.array(data['verts3d'])
 vcolors = np.array(data['vcolors'])
 faces = np.array(data['faces'])
