@@ -1,30 +1,7 @@
 import numpy as np
 from rendering import scanline_rendering as scanline
 import transformations.projection as pro
-
-
-def rasterize(verts_2d, img_h, img_w, cam_h, cam_w):
-    """
-    Takes every projected point from the camera's shutter and places them in a digital photo.
-    Args:
-        verts_2d: a Nx3 matrix containing every projected point
-        img_h: The height of the image, measured in pixels
-        img_w: The width of the image, measured in pixels
-        cam_h: The height of the camera, measured in world units
-        cam_w: The width of the camera, measured in world units
-
-    Returns:
-        verts_rast: projected points placed in a canvas
-    """
-
-    verts_rast = np.zeros((len(verts_2d), 2))
-    width = img_w / cam_w
-    height = img_h / cam_h
-    for i in range(len(verts_2d)):
-        verts_rast[i, 0] = np.around((verts_2d[i, 0] + cam_h / 2) * height - 0.5)
-        verts_rast[i, 1] = np.around((-verts_2d[i, 1] + cam_w / 2) * width - 0.5)
-
-    return verts_rast
+from rendering.helpers import rasterize
 
 
 def render_object(verts_3d, faces, vcolors, img_h, img_w, cam_h, cam_w, f, c_org, c_lookat, c_up):

@@ -9,8 +9,8 @@ def ambient_light(K_a, I_a):
     Calculates the illumination of a point P, which belongs to a surface with a material of type-Phong
     due to diffuse illumination from the environment.
 
-    :param Ka: the factor of diffused light from the environment
-    :param Ia: the 3 × 1 vector with the components of the diffuse irradiance of the ambient radiation intensity. Each component belongs to the interval [0, 1].
+    :param K_a: the factor of diffused light from the environment
+    :param I_a: the 3 × 1 vector with the components of the diffuse irradiance of the ambient radiation intensity. Each component belongs to the interval [0, 1].
     :return: the trichromatic intensity, reflected from point P. The intensity contributes cumulatively to the colour of the pixel.
     """
 
@@ -30,12 +30,10 @@ def diffuse_light(P, N, color, kd, light_positions, light_intensities):
     :return: the trichromatic intensity, reflected from point P. The intensity contributes cumulatively to the final colour of the pixel.
     """
 
-    I_lambda = np.ones((3, 1))
-    for element_index in range(light_positions.shape[1]):
-        L = P - light_positions[element_index] / la.norm(P - light_positions[element_index])
-        angle = np.dot(N, L)
-        I_lambda *= light_intensities[element_index] * kd * angle
-    return np.dot(color, I_lambda)
+    L = P - light_positions / la.norm(P - light_positions)
+    angle = np.dot(L, N.reshape((3,1)))
+    I_lambda = light_intensities * kd * angle
+    return np.multiply(color, I_lambda)
 
 
 def specular_light(P, N, color, cam_pos, ks, n, light_positions, light_intensities):
@@ -54,10 +52,8 @@ def specular_light(P, N, color, cam_pos, ks, n, light_positions, light_intensiti
     """
 
     V = (cam_pos - P) / la.norm((cam_pos - P))
-    I_lambda = np.ones((3, 1))
-    for element_index in range(light_positions.shape[1]):
-        L = P - light_positions[element_index] / la.norm(P - light_positions[element_index])
-        LN_inner_product = np.dot(N, L)
-        angle = np.dot(2 * N * LN_inner_product - L, V)**n
-        I_lambda *= light_intensities[element_index] * ks * angle
-    return np.dot(color, I_lambda)
+    L = P - light_positions / la.norm(P - light_positions)
+    LN_inner_product = np.dot(N.T, L.T)
+    angle = np.dot(2 * N.T * LN_inner_product - L, V)
+    I_lambda = light_intensities * ks * angle ** n
+    return np.multiply(color, I_lambda)

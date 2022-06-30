@@ -1,11 +1,11 @@
 import numpy as np
 from numpy import linalg as la
 
-inside = lambda x, y, slopes, b: False if slopes[0] * x + y + b[0] < 0 and slopes[1] * x + y + b[1] < 0 and slopes[2] * x + y + b[2] < 0 else True
+inside = lambda x, y, slopes, b: False if slopes[0] * x + y + b[0] < 0 and slopes[1] * x + y + b[1] < 0 and slopes[
+    2] * x + y + b[2] < 0 else True
 
 
 def slope(point1, point2):
-    np.seterr(divide='ignore')
     """Calculates slope of two points
     -----------
     point1:1x2 numpy array
@@ -17,6 +17,7 @@ def slope(point1, point2):
     Slope: int
         The slope of the line crossing point 1 and 2 
     """
+    np.seterr(divide='ignore')
     if point1[0] == point2[0]:
         return np.inf
     else:
@@ -67,16 +68,20 @@ def find_initial_elements(edges, active_edges):
     if edges[active_edges[0]].verts[0, 1] == edges[active_edges[0]].y_max:
         x1 = edges[active_edges[0]].verts[1, 0]
         C1 = edges[active_edges[0]].colors[1, :]
+        n1 = 1
     else:
         x1 = edges[active_edges[0]].verts[0, 0]
         C1 = edges[active_edges[0]].colors[0, :]
+        n1 = 0
     if edges[active_edges[1]].verts[0, 1] == edges[active_edges[1]].y_max:
         x2 = edges[active_edges[1]].verts[1, 0]
         C2 = edges[active_edges[1]].colors[1, :]
+        n2 = 1
     else:
         x2 = edges[active_edges[1]].verts[0, 0]
         C2 = edges[active_edges[1]].colors[0, :]
-    return x1, x2, C1, C2
+        n2 = 0
+    return x1, x2, C1, C2, n1, n2
 
 
 def update_active_edges(edges, active_edges, y):
@@ -132,6 +137,30 @@ def swap(a, b):
     return a, b
 
 
+def rasterize(verts_2d, img_h, img_w, cam_h, cam_w):
+    """
+    Takes every projected point from the camera's shutter and places them in a digital photo.
+    Args:
+        verts_2d: a Nx3 matrix containing every projected point
+        img_h: The height of the image, measured in pixels
+        img_w: The width of the image, measured in pixels
+        cam_h: The height of the camera, measured in world units
+        cam_w: The width of the camera, measured in world units
+
+    Returns:
+        verts_rast: projected points placed in a canvas
+    """
+
+    verts_rast = np.zeros((len(verts_2d), 2))
+    width = img_w / cam_w
+    height = img_h / cam_h
+    for i in range(len(verts_2d)):
+        verts_rast[i, 0] = np.around((verts_2d[i, 0] + cam_h / 2) * height - 0.5)
+        verts_rast[i, 1] = np.around((-verts_2d[i, 1] + cam_w / 2) * width - 0.5)
+
+    return verts_rast
+
+
 def calculate_normals(vertices, face_indices):
     """
     Calculates the normal surface vectors
@@ -144,10 +173,12 @@ def calculate_normals(vertices, face_indices):
     N_vectors = np.zeros(vertices.shape)
 
     for face_index in face_indices:
-        triange_vertices = triange_vertices[face_index]
-        AB_vector = triange_vertices[1] - triange_vertices[0]
-        AC_vector = triange_vertices[2] - triange_vertices[0]
-        N = np.cross(AB_vector, AC_vector) / la.norm(np.cross(AB_vector, AC_vector))
-        N_vectors[face_index] = N
+        triangle = vertices[face_index]
+        triangle_side_AB = (triangle[1] - triangle[0]) / la.norm((triangle[1] - triangle[0]))
+        triangle_side_AC = (triangle[2] - triangle[0]) / la.norm((triangle[2] - triangle[0]))
+        triangle_normal_vector = np.cross(triangle_side_AC, triangle_side_AB)
+        N_vectors[face_index] += triangle_normal_vector
 
+    for i in range(len(N_vectors)):
+        N_vectors[i] /= la.norm(N_vectors[i])
     return N_vectors
