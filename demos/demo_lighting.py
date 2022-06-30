@@ -1,6 +1,7 @@
 import numpy as np
-from rendering.shade import render_object
 import matplotlib.pyplot as plt
+from rendering.render import render_object
+
 
 data = np.load("../materials/hw3.npy", allow_pickle=True).tolist()
 

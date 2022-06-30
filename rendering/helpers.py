@@ -1,6 +1,22 @@
 import numpy as np
 from numpy import linalg as la
 
+
+class Edge:
+    def __init__(self, name, verts, colors, slope, is_active):
+        self.normal_vectors = None
+        self.name = name
+        self.verts = verts
+        self.colors = colors
+        self.slope = slope
+        self.is_active = is_active;
+        self.y_min = min(verts[0, 1], verts[1, 1])
+        self.y_max = max(verts[0, 1], verts[1, 1])
+
+    def set_normal_vectors(self, normal_vectors):
+        self.normal_vectors = normal_vectors
+
+
 inside = lambda x, y, slopes, b: False if slopes[0] * x + y + b[0] < 0 and slopes[1] * x + y + b[1] < 0 and slopes[
     2] * x + y + b[2] < 0 else True
 

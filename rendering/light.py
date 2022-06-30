@@ -1,7 +1,5 @@
 import numpy as np
-import transformations.transform as tra
 from numpy import linalg as la
-from rendering import helpers as h
 
 
 def ambient_light(K_a, I_a):

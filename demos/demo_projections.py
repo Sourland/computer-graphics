@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from rendering import nD_rendering as nD
+from rendering import render as nD
 from transformations.transform import affine_transform
 
 data = np.load("../materials/hw2.npy", allow_pickle=True).tolist()
