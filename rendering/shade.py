@@ -1,8 +1,8 @@
 import numpy as np
 import math
-from rendering.helpers import calculate_normals, rasterize, update_active_edges, find_initial_elements, slope
-from numpy import linalg as la
-from rendering.scanline_rendering import Edge, interpolate, shade_triangle
+from rendering.helpers import calculate_normals, rasterize, update_active_edges, find_initial_elements, slope, \
+    interpolate_color, interpolate_vector
+from rendering.scanline_rendering import Edge, shade_triangle
 from rendering.light import ambient_light, diffuse_light, specular_light
 from transformations.projection import project_cam_lookat
 
@@ -46,21 +46,34 @@ def render_object(shader, focal, eye, lookat, up, bg_color, M, N, H, W, verts, v
     depth_order = np.array(np.mean(depth[face_indices], axis=1))
 
     # Sort triangles by depth
+    for i in range(len(vert_colors)):
+        vert_colors[i] = ambient_light(ka, Ia) + \
+                         diffuse_light(verts[i], normals[i], vert_colors[i], kd, light_positions, light_intensities) + \
+                         specular_light(verts[i], normals[i], vert_colors[i], eye, ks, n, light_positions,
+                                        light_intensities)
+
     sorted_triangles = list(np.flip(np.argsort(depth_order)))
+    if shader == 'Gouraud':
+        for triangle in sorted_triangles:
+            triangle_vertices_indeces = face_indices[triangle]
+            triangle_verts2d = np.array(verts2d[triangle_vertices_indeces])
+            triangle_vcolors = np.array(vert_colors[triangle_vertices_indeces])
+            img = shade_triangle(img, triangle_verts2d, triangle_vcolors, 'Gouraud')
+
     if shader == 'Flat':
-        for triangles in sorted_triangles:
-            triangle_vertices_indeces = face_indices[triangles]
+        for triangle in sorted_triangles:
+            triangle_vertices_indeces = face_indices[triangle]
             triangle_verts2d = np.array(verts2d[triangle_vertices_indeces])
             triangle_vcolors = np.array(vert_colors[triangle_vertices_indeces])
             img = shade_triangle(img, triangle_verts2d, triangle_vcolors, 'Flat')
 
     if shader == 'Phong':
-        for triangles in sorted_triangles:
-            triangle_vertices_indeces = face_indices[triangles]
+        for triangle in sorted_triangles:
+            triangle_vertices_indeces = face_indices[triangle]
             triangle_verts2d = np.array(verts2d[triangle_vertices_indeces])
             triangle_vcolors = np.array(vert_colors[triangle_vertices_indeces])
-            barycentre_coords = np.mean(verts, axis=0);
-            img = shade_phong(triangle_verts2d, normals, triangle_vcolors, barycentre_coords, eye, ka, kd, ks, n,
+            barycentre_coords = np.mean(verts[triangle_vertices_indeces], axis=0)
+            img = shade_phong(triangle_verts2d, normals[triangle_vertices_indeces], triangle_vcolors, barycentre_coords, eye, ka, kd, ks, n,
                               light_positions, light_intensities, Ia, img)
     return img
 
@@ -107,12 +120,12 @@ def shade_phong(vertice_positions, vertice_normal_vectors, vertice_colors, baryc
     :return: the final image with rendered triangles
     """
 
-    if np.all(vertice_positions[0, 0] == vertice_positions[:, 0]) and \
-            np.all(vertice_positions[:, 1] == vertice_positions[0, 1]):
-        return img
-
-    if len(np.unique(vertice_positions, axis=0)) < 3:
-        return img
+    # if np.all(vertice_positions[0, 0] == vertice_positions[:, 0]) and \
+    #         np.all(vertice_positions[:, 1] == vertice_positions[0, 1]):
+    #     return img
+    #
+    # if len(np.unique(vertice_positions, axis=0)) < 3:
+    #     return img
 
     # Initialize Edge elements
     Edge1 = Edge("AB", np.array([vertice_positions[0, :], vertice_positions[1, :]]),
@@ -125,9 +138,9 @@ def shade_phong(vertice_positions, vertice_normal_vectors, vertice_colors, baryc
                  np.array([vertice_colors[0, :], vertice_colors[2, :]]),
                  slope(vertice_positions[0, :], vertice_positions[2, :]), False)
 
-    Edge1.set_normal_vectors(np.array([vertice_normal_vectors[0, :], vertice_normal_vectors[1, :]]))
-    Edge2.set_normal_vectors(np.array([vertice_normal_vectors[1, :], vertice_normal_vectors[2, :]]))
-    Edge3.set_normal_vectors(np.array([vertice_normal_vectors[0, :], vertice_normal_vectors[2, :]]))
+    Edge1.set_normal_vectors(np.array([vertice_normal_vectors[0], vertice_normal_vectors[1]]))
+    Edge2.set_normal_vectors(np.array([vertice_normal_vectors[1], vertice_normal_vectors[2]]))
+    Edge3.set_normal_vectors(np.array([vertice_normal_vectors[0], vertice_normal_vectors[2]]))
 
     # Define minimum and maximum y
     y_max = np.array(np.max(vertice_positions, axis=0))[1]
@@ -141,7 +154,7 @@ def shade_phong(vertice_positions, vertice_normal_vectors, vertice_colors, baryc
     for i in range(len(edges)):
         if y_min == edges[i].y_min:
             if edges[i].slope != 0:
-                edges[i].is_active = True;
+                edges[i].is_active = True
                 active_edges.append(i)
             else:
                 horizontal_line = True
@@ -161,9 +174,8 @@ def shade_phong(vertice_positions, vertice_normal_vectors, vertice_colors, baryc
         x1, x2, C1, C2, n1, n2 = find_initial_elements(edges, active_edges)
         for x in range(x1, x2 + 1):
             if 0 <= x <= img.shape[0] - 1 and 0 <= y_min <= img.shape[1] - 1:
-                color = interpolate(x1, x2, x, C1, C2)
-                normal_vector = interpolate(x1, x2, x, vertice_normal_vectors[n1], vertice_normal_vectors[n2])
-                normal_vector /= la.norm(normal_vector)
+                color = interpolate_color(x1, x2, x, C1, C2)
+                normal_vector = interpolate_vector(x1, x2, x, vertice_normal_vectors[n1], vertice_normal_vectors[n2])
                 img[x, y_min] = ambient_light(ka, Ia) + \
                                 diffuse_light(barycentre_coords, normal_vector, color, kd, light_positions,
                                               light_intensities) + \
@@ -177,25 +189,24 @@ def shade_phong(vertice_positions, vertice_normal_vectors, vertice_colors, baryc
         if edges[active_edges[1]].slope != float('inf'):
             x2 = x2 + 1 / edges[active_edges[1]].slope
 
-        color_A = interpolate(edges[active_edges[0]].y_min, edges[active_edges[0]].y_max, y,
-                              edges[active_edges[0]].colors[0, :], edges[active_edges[0]].colors[1, :])
-        normal_vector_1 = interpolate(edges[active_edges[0]].y_min, edges[active_edges[0]].y_max, y,
-                                      edges[active_edges[0]].normal_vectors[0, :],
-                                      edges[active_edges[0]].normal_vectors[1, :])
-        normal_vector_1 /= la.norm(normal_vector_1)
-        color_B = interpolate(edges[active_edges[1]].y_min, edges[active_edges[1]].y_max, y,
-                              edges[active_edges[1]].colors[0, :], edges[active_edges[1]].colors[1, :])
-        normal_vector_2 = interpolate(edges[active_edges[1]].y_min, edges[active_edges[1]].y_max, y,
-                                      edges[active_edges[1]].normal_vectors[0, :],
-                                      edges[active_edges[1]].normal_vectors[1, :])
-        normal_vector_2 /= la.norm(normal_vector_2)
+        color_A = interpolate_color(edges[active_edges[0]].y_min, edges[active_edges[0]].y_max, y,
+                                    edges[active_edges[0]].colors[0, :], edges[active_edges[0]].colors[1, :])
+        normal_vector_1 = interpolate_vector(edges[active_edges[0]].y_min, edges[active_edges[0]].y_max, y,
+                                             edges[active_edges[0]].normal_vectors[0, :],
+                                             edges[active_edges[0]].normal_vectors[1, :])
+
+        color_B = interpolate_color(edges[active_edges[1]].y_min, edges[active_edges[1]].y_max, y,
+                                    edges[active_edges[1]].colors[0, :], edges[active_edges[1]].colors[1, :])
+        normal_vector_2 = interpolate_vector(edges[active_edges[1]].y_min, edges[active_edges[1]].y_max, y,
+                                             edges[active_edges[1]].normal_vectors[0, :],
+                                             edges[active_edges[1]].normal_vectors[1, :])
 
         for x in range(int(min(x1, x2)), int(max(x1, x2)) + 1):
             if 0 <= x <= img.shape[0] - 1 and 0 <= y <= img.shape[1] - 1:
-                color = interpolate(int(x1), int(x2), int(math.floor(x + 0.5)),
-                                    color_A, color_B)
-                normal_vector = interpolate(x1, x2, x, normal_vector_1, normal_vector_2)
-                img[x, y_min] = ambient_light(ka, Ia) + \
+                color = interpolate_color(int(x1), int(x2), int(math.floor(x + 0.5)),
+                                          color_A, color_B)
+                normal_vector = interpolate_vector(x1, x2, x, normal_vector_1, normal_vector_2)
+                img[int(math.floor(x + 0.5)), y] = ambient_light(ka, Ia) + \
                                 diffuse_light(barycentre_coords, normal_vector, color, kd, light_positions,
                                               light_intensities) + \
                                 specular_light(barycentre_coords, normal_vector, color, cam_pos, ks, n, light_positions,

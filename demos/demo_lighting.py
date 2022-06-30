@@ -6,7 +6,6 @@ data = np.load("../materials/hw3.npy", allow_pickle=True).tolist()
 
 verts = np.array(data['verts'])
 vertex_colors = np.array(data['vertex_colors'])
-print(vertex_colors)
 face_indices = np.array(data['face_indices'])
 depth = np.array(data['depth'])
 cam_eye = np.array(data['cam_eye'])
@@ -24,13 +23,11 @@ N = np.array(data['N'])
 W = np.array(data['W'])
 H = np.array(data['H'])
 bg_color = np.array(data['bg_color'])
-print(bg_color)
 focal = 70
 
 img = render_object('Phong', focal, cam_eye, cam_lookat, cam_up, bg_color, M, N, H, W, verts, vertex_colors,
                     face_indices, ka, kd, ks, n, light_positions, light_intensities, Ia)
 
-print(img)
 plt.imshow(img)
 plt.show()
 plt.title("CLASSIC")

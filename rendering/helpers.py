@@ -24,6 +24,63 @@ def slope(point1, point2):
         return (point1[1] - point2[1]) / (point1[0] - point2[0])
 
 
+def interpolate_color(x1, x2, x, C1, C2):
+    """Interpolates color C1, C2 of points x1 and x2 to calculate color C of point x
+    Parameters:
+    -----------
+    x1: int
+        A coordinate of vertice 1 (horizontal or vertical) of a triangle
+    x2: int
+        A coordinate of vertice 2 (horizontal or vertical) of a triangle
+    x: int
+        Α coordinate of the point where we want the color to be calculated
+    C1: 3x1 numpy array
+        The color at x1
+    C2: 3x1 numpy array
+        The color at x2
+    Returns:
+    -----------
+    C: 3x1 numpy array
+        Color at x
+    """
+    if x1 == x2:
+        return C1
+    t = (x - x1) / (x2 - x1)  # slope of linear interpolation
+    C = np.zeros(3)  # Initialize the C color vector
+    # Calculating colors at x
+    C[0] = abs(C1[0] + t * (C2[0] - C1[0]))
+    C[1] = abs(C1[1] + t * (C2[1] - C1[1]))
+    C[2] = abs(C1[2] + t * (C2[2] - C1[2]))
+    return C
+
+
+def interpolate_vector(x1, x2, x, vector1, vector2):
+    """Interpolates color C1, C2 of points x1 and x2 to calculate color C of point x
+    Parameters:
+    -----------
+    x1: int
+        A coordinate of vertice 1 (horizontal or vertical) of a triangle
+    x2: int
+        A coordinate of vertice 2 (horizontal or vertical) of a triangle
+    x: int
+        Α coordinate of the point where we want the color to be calculated
+    C1: 3x1 numpy array
+        The color at x1
+    C2: 3x1 numpy array
+        The color at x2
+    Returns:
+    -----------
+    C: 3x1 numpy array
+        Color at x
+    """
+    if abs(x1 - x2) < 1e-3:
+        return vector1
+    t = (x - x1) / (x2 - x1)  # slope of linear interpolation
+    vector = np.array(vector1 + t * (vector2 - vector1))
+    vector /= la.norm(vector)
+    return vector
+
+
 def compute_barycentric_coordinates(verts2d, x, y):
     """Calculates barycentric coordinates of x,y in relationship to verts2d location
     -----------
@@ -156,7 +213,7 @@ def rasterize(verts_2d, img_h, img_w, cam_h, cam_w):
     height = img_h / cam_h
     for i in range(len(verts_2d)):
         verts_rast[i, 0] = np.around((verts_2d[i, 0] + cam_h / 2) * height - 0.5)
-        verts_rast[i, 1] = np.around((-verts_2d[i, 1] + cam_w / 2) * width - 0.5)
+        verts_rast[i, 1] = np.around((verts_2d[i, 1] + cam_w / 2) * width - 0.5)
 
     return verts_rast
 
