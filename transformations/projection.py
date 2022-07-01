@@ -19,7 +19,6 @@ def project_cam(c_v, c_x, c_y, c_z, p, f=1):
         verts2d: The coordinates of N projected triangle vertices points to apply the projection, expressed in the WCS
         depth: Every depth of the projected triangle vertices points
     """
-    c_v, c_x, c_y, c_z, p = h.casting(c_v, c_x, c_y, c_z, p)
     R = np.vstack((c_x, c_y, c_z)).T
     p = tra.system_transform(p, R, c_v)
     depth = p[:, 2]
@@ -47,7 +46,6 @@ def project_cam_lookat(c_org, c_lookat, c_up, verts_3d, f=1):
     t = np.array(c_up - np.dot(c_up, c_z) * c_z)
     c_y = t / la.norm(t)
     c_x = np.cross(c_y, c_z)
-    c_x, c_y, c_z = h.casting(c_x, c_y, c_z)
     return project_cam(c_org, c_x, c_y, c_z, verts_3d, f)
 
 

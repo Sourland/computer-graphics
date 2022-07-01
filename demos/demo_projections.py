@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from rendering import render as nD
+from rendering.render import render_object_camera
 from transformations.transform import affine_transform
 
 data = np.load("../materials/hw2.npy", allow_pickle=True).tolist()
@@ -19,23 +19,25 @@ img_h = img_w = 512
 cam_h = cam_w = 15
 f = 70
 
-img = nD.render_object(verts_3d, faces, vcolors, img_h, img_w, cam_h, cam_w, f, c_org, c_lookat, c_up)
+img = render_object_camera(verts_3d, faces, vcolors, img_h, img_w, cam_h, cam_w, f, c_org, c_lookat, c_up)
 plt.imshow(img)
-plt.savefig('../results/Image1.jpeg')
+plt.show()
+plt.savefig('../results/Assignment 2 - Projections & Transformations/Image_Fish_Normal.jpeg')
 
 verts_3d = affine_transform(verts_3d, u, 0, t_1)
-img = nD.render_object(verts_3d, faces, vcolors, img_h, img_w, cam_h, cam_w, f, c_org, c_lookat, c_up)
+img = render_object_camera(verts_3d, faces, vcolors, img_h, img_w, cam_h, cam_w, f, c_org, c_lookat, c_up)
 plt.imshow(img)
-plt.savefig('../results/Image2.jpeg')
+plt.show()
+plt.savefig('../results/Assignment 2 - Projections & Transformations/Image_Fish_Offset_1.jpeg')
 
 verts_3d = affine_transform(verts_3d, u, phi)
-img = nD.render_object(verts_3d, faces, vcolors, img_h, img_w, cam_h, cam_w, f, c_org, c_lookat, c_up)
+img = render_object_camera(verts_3d, faces, vcolors, img_h, img_w, cam_h, cam_w, f, c_org, c_lookat, c_up)
 plt.imshow(img)
-plt.savefig('../results/Image3.jpeg')
+plt.show()
+plt.savefig('../results/Assignment 2 - Projections & Transformations/Image_Fish_Rotated.jpeg')
 
 verts_3d = affine_transform(verts_3d, u, 0, t_2)
-img = nD.render_object(verts_3d, faces, vcolors, img_h, img_w, cam_h, cam_w, f, c_org, c_lookat, c_up)
+img = render_object_camera(verts_3d, faces, vcolors, img_h, img_w, cam_h, cam_w, f, c_org, c_lookat, c_up)
 plt.imshow(img)
-plt.savefig('../results/Image4.jpeg')
-
-
+plt.show()
+plt.savefig('../results/Assignment 2 - Projections & Transformations/Image_Fish_Offset_2.jpeg')

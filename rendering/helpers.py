@@ -1,5 +1,6 @@
 import numpy as np
 from numpy import linalg as la
+from .light import ambient_light, diffuse_light, specular_light
 
 
 class Edge:
@@ -9,7 +10,7 @@ class Edge:
         self.verts = verts
         self.colors = colors
         self.slope = slope
-        self.is_active = is_active;
+        self.is_active = is_active
         self.y_min = min(verts[0, 1], verts[1, 1])
         self.y_max = max(verts[0, 1], verts[1, 1])
 
@@ -17,49 +18,41 @@ class Edge:
         self.normal_vectors = normal_vectors
 
 
-inside = lambda x, y, slopes, b: False if slopes[0] * x + y + b[0] < 0 and slopes[1] * x + y + b[1] < 0 and slopes[
-    2] * x + y + b[2] < 0 else True
-
-
-def slope(point1, point2):
-    """Calculates slope of two points
-    -----------
-    point1:1x2 numpy array
-        First point for slope calculation
-    point2:1x2 numpy array
-        Second point for slope calculation 
-    Returns:
-    -----------
-    Slope: int
-        The slope of the line crossing point 1 and 2 
+def slope(pointA, pointB):
     """
+    Calculates slope of two points in a 2D Plane
+
+    Args:
+        pointA: First point for slope calculation
+        pointB: Second point for slope calculation
+
+    Returns:
+        the slope of the line AB crossing point A and B
+    """
+
     np.seterr(divide='ignore')
-    if point1[0] == point2[0]:
+    if pointA[0] == pointB[0]:
         return np.inf
     else:
-        return (point1[1] - point2[1]) / (point1[0] - point2[0])
+        return (pointA[1] - pointB[1]) / (pointA[0] - pointB[0])
 
 
 def interpolate_color(x1, x2, x, C1, C2):
-    """Interpolates color C1, C2 of points x1 and x2 to calculate color C of point x
-    Parameters:
-    -----------
-    x1: int
-        A coordinate of vertice 1 (horizontal or vertical) of a triangle
-    x2: int
-        A coordinate of vertice 2 (horizontal or vertical) of a triangle
-    x: int
-        Α coordinate of the point where we want the color to be calculated
-    C1: 3x1 numpy array
-        The color at x1
-    C2: 3x1 numpy array
-        The color at x2
+    """
+    Interpolates color C1, C2 of points x1 and x2 to calculate color C of point x
+
+    Args:
+        x1: A coordinate of vertice 1 (horizontal or vertical) of a triangle
+        x2: A coordinate of vertice 2 (horizontal or vertical) of a triangle
+        x: A coordinate of the point where we want the color to be calculated
+        C1: The color at x1
+        C2: The color at x2
+
     Returns:
-    -----------
-    C: 3x1 numpy array
         Color at x
     """
-    if x1 == x2:
+
+    if abs(x1 - x2) < 1e-3:
         return C1
     t = (x - x1) / (x2 - x1)  # slope of linear interpolation
     C = np.zeros(3)  # Initialize the C color vector
@@ -71,23 +64,17 @@ def interpolate_color(x1, x2, x, C1, C2):
 
 
 def interpolate_vector(x1, x2, x, vector1, vector2):
-    """Interpolates color C1, C2 of points x1 and x2 to calculate color C of point x
-    Parameters:
-    -----------
-    x1: int
-        A coordinate of vertice 1 (horizontal or vertical) of a triangle
-    x2: int
-        A coordinate of vertice 2 (horizontal or vertical) of a triangle
-    x: int
-        Α coordinate of the point where we want the color to be calculated
-    C1: 3x1 numpy array
-        The color at x1
-    C2: 3x1 numpy array
-        The color at x2
+    """
+    Interpolates vectors horizontally or vertically between points A and B
+    Args:
+        x1: A coordinate value (horizontal or vertical) of point A
+        x2: A coordinate value (horizontal or vertical) of point B
+        x: A coordinate value (horizontal or vertical) of the desired point
+        vector1: The normal vector at point A
+        vector2: The normal Vector at point B
+
     Returns:
-    -----------
-    C: 3x1 numpy array
-        Color at x
+        The normal vector at x
     """
     if abs(x1 - x2) < 1e-3:
         return vector1
@@ -97,46 +84,15 @@ def interpolate_vector(x1, x2, x, vector1, vector2):
     return vector
 
 
-def compute_barycentric_coordinates(verts2d, x, y):
-    """Calculates barycentric coordinates of x,y in relationship to verts2d location
-    -----------
-    verts2d: 3x2 numpy array
-        The coordinates of the triangle vertices
-    (x,y): int
-        The current pixel coordinates
-    Returns:
-    -----------
-    (a,b,c): float
-        The barycentric coordinates of the pixel
-    """
-    a = f_ab(x, y, 1, 2, verts2d) / f_ab(verts2d[0, 0], verts2d[0, 1], 1, 2, verts2d)
-    b = f_ab(x, y, 2, 0, verts2d) / f_ab(verts2d[1, 0], verts2d[1, 1], 2, 0, verts2d)
-    c = f_ab(x, y, 0, 1, verts2d) / f_ab(verts2d[2, 0], verts2d[2, 1], 0, 1, verts2d)
-    return a, b, c
-
-
-def f_ab(x, y, a, b, verts2d):
-    """A helper function for barycentric coordinates calculation
-    """
-    return ((verts2d[a, 1] - verts2d[b, 1]) * x +
-            (verts2d[b, 0] - verts2d[a, 0]) * y +
-            verts2d[a, 0] * verts2d[b, 1] -
-            verts2d[b, 0] * verts2d[a, 1])
-
-
 def find_initial_elements(edges, active_edges):
-    """Calculates initial active points and colors
-    -----------
-    edges: 3x1 Edge array
-        All the edge objects
-    active_edges: 2x1 index array
-        Indexes to the 2 current active edges
+    """
+    Calculates initial active points and colors
+    Args:
+        edges: A list with every edge of a polygon (in this case a triangle)
+        active_edges: A list with every active edge in the scanline algorithm of a polygon (in this case a triangle)
+
     Returns:
-    -----------
-    x1,x2: int 
-        Initial active points
-    C1, C2: 3x1 numpy array
-        RGB values for initial active_point
+        The scanline algorithm starting colors, points and normal vectors.
     """
     if edges[active_edges[0]].verts[0, 1] == edges[active_edges[0]].y_max:
         x1 = edges[active_edges[0]].verts[1, 0]
@@ -158,18 +114,15 @@ def find_initial_elements(edges, active_edges):
 
 
 def update_active_edges(edges, active_edges, y):
-    """Calculates initial active points and colors
-    -----------
-    edges: 3x1 Edge array
-        All the edge objects
-    active_edges: 2x1 index array
-        Indexes to the 2 current active edges
-    y: int
-        current y scanline
+    """
+    Changes the current active edges in the scanline algorithm, if required
+    Args:
+        edges: A list with every edge of a polygon (in this case a triangle)
+        active_edges: A list with every active edge in the scanline algorithm of a polygon (in this case a triangle)
+        y: The current y-coordinate in the scanline algorithm
+
     Returns:
-    -----------
-    active_edges:2x1 index array
-        The new active edges
+        The new list of active edges
     """
     if y == edges[active_edges[0]].y_max:
         for i in range(len(edges)):
@@ -182,32 +135,20 @@ def update_active_edges(edges, active_edges, y):
     return active_edges
 
 
-def casting(*args):
+def swap(object_a, object_b):
     """
-
+    Swaps 2 objects
     Args:
-        *args:
+        object_a: First object
+        object_b: Second object
 
     Returns:
-
+        Swapped objects A and B (now B and A)
     """
-    return tuple(arg for arg in args)
-
-
-def swap(a, b):
-    """
-
-    Args:
-        a:
-        b:
-
-    Returns:
-
-    """
-    temp = a
-    a = b
-    b = temp
-    return a, b
+    temp = object_a
+    object_a = object_b
+    object_b = temp
+    return object_a, object_b
 
 
 def rasterize(verts_2d, img_h, img_w, cam_h, cam_w):
@@ -238,9 +179,12 @@ def calculate_normals(vertices, face_indices):
     """
     Calculates the normal surface vectors
 
-    :param vertices: a 3 × N matrix with the coordinates of the vertices of the object.
-    :param face_indices: a 3×N matrix describing the triangles
-    :return: A 3 × N matrix with the coordinates of the vertical vectors in each point (vertex) of the surface defining the object
+    Args:
+        vertices: a 3 × N matrix with the coordinates of the vertices of the obje
+        face_indices: A 3 × N matrix with the coordinates of the vertical vectors in each point (vertex) of the surface defining the object
+
+    Returns:
+        Normal vectors in each triangle vertice
     """
 
     N_vectors = np.zeros(vertices.shape)
@@ -255,3 +199,42 @@ def calculate_normals(vertices, face_indices):
     for i in range(len(N_vectors)):
         N_vectors[i] /= la.norm(N_vectors[i])
     return N_vectors
+
+
+def get_color(lighting, P, normal_vector, color, cam_pos, ka, kd, ks, n, light_positions, light_intensities, Ia):
+    """
+    Calculates the color of a pixel depending on lighting
+
+    Args:
+         lighting: a variable that controls whether all the light sources in the scene will be used, or just one and which one.
+         P: a vector of dimension 3×1 contains the barycentre of the triangle before its projection.
+         normal_vector: a 3 × 1 vector containing the normal vectors on that point of the 3D triange
+         color: a 3 × 1 matrix containing the colour of the point of the 3D triangle.
+         cam_pos: a 3 × 1 column vector with the coordinates of the observer (i.e. the camera).
+         ka: the factor of diffused light from the environment
+         kd: the diffuse reflection coefficient of the Phong model
+         ks: the specular reflection coefficient of the Phong model
+         n: the Phong coefficient
+         light_positions: a list of 3 × 1 vectors containing the components of the position of the light sources.
+         light_intensities: a list of 3 × 1 vectors containing the intensities of the bright sources (corresponding to light_positions).
+         Ia: the 3 × 1 vector with the components of the diffuse irradiance of the ambient radiation intensity. Each component belongs to the interval [0, 1].
+
+    Returns:
+        The final color of a pixel
+    """
+
+    if lighting == 'Ambient':
+        color = ambient_light(ka, Ia)
+
+    if lighting == 'Diffuse':
+        color = diffuse_light(P, normal_vector, color, kd, light_positions, light_intensities)
+
+    if lighting == 'Specular':
+        color = specular_light(P, normal_vector, color, cam_pos, ks, n, light_positions, light_intensities)
+
+    if lighting == 'All':
+        color = ambient_light(ka, Ia) + \
+                diffuse_light(P, normal_vector, color, kd, light_positions, light_intensities) + \
+                specular_light(P, normal_vector, color, cam_pos, ks, n, light_positions, light_intensities)
+
+    return color

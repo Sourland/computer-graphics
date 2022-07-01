@@ -1,6 +1,5 @@
 import numpy as np
 from numpy import linalg as la
-from rendering.helpers import casting
 
 
 def affine_transform(c_p, u, theta=0, t=3 * [0]):
@@ -54,7 +53,6 @@ def system_transform(c_p, R, c_0):
         d_p: a Nx3 matrix containing the coordinates of N points expressed in a different coordinate system
     """
 
-    c_p, R, c_0 = casting(c_p, R, c_0)
     if c_p.ndim == 1:
         c_p = (c_p - c_0)
     else:
