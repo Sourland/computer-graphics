@@ -57,4 +57,4 @@ def system_transform(c_p, R, c_0):
         c_p = (c_p - c_0)
     else:
         c_p = np.array([c_p[i, :] - c_0 for i in range(c_p.shape[0])])
-    return np.dot(R, c_p.T).T
+    return np.dot(R.T, c_p.T).T

@@ -170,8 +170,7 @@ def rasterize(verts_2d, img_h, img_w, cam_h, cam_w):
     height = img_h / cam_h
     for i in range(len(verts_2d)):
         verts_rast[i, 0] = np.around((verts_2d[i, 0] + cam_h / 2) * height - 0.5)
-        verts_rast[i, 1] = np.around((verts_2d[i, 1] + cam_w / 2) * width - 0.5)
-
+        verts_rast[i, 1] = np.around((-verts_2d[i, 1] + cam_w / 2) * width - 0.5)
     return verts_rast
 
 

@@ -22,8 +22,8 @@ def project_cam(c_v, c_x, c_y, c_z, p, f=1):
     R = np.vstack((c_x, c_y, c_z)).T
     p = tra.system_transform(p, R, c_v)
     depth = p[:, 2]
-    x_projected = (f / depth) * p[:, 1]
-    y_projected = (f / depth) * p[:, 0]
+    x_projected = -(f / depth) * p[:, 1]
+    y_projected = -(f / depth) * p[:, 0]
     verts2d = np.vstack((x_projected, y_projected))
 
     return verts2d.T, depth
@@ -41,8 +41,8 @@ def project_cam_lookat(c_org, c_lookat, c_up, verts_3d, f=1):
     Returns:
 
     """
-    c_lookat = np.array(c_lookat) + np.array(c_org)
-    c_z = c_lookat / la.norm(c_lookat)
+    c_k = np.array(c_lookat) - np.array(c_org)
+    c_z = c_k / la.norm(c_k)
     t = np.array(c_up - np.dot(c_up, c_z) * c_z)
     c_y = t / la.norm(t)
     c_x = np.cross(c_y, c_z)
