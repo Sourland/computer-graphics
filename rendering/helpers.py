@@ -14,6 +14,7 @@ class Edge:
         self.y_min = min(verts[0, 1], verts[1, 1])
         self.y_max = max(verts[0, 1], verts[1, 1])
 
+
     def set_normal_vectors(self, normal_vectors):
         self.normal_vectors = normal_vectors
 
@@ -78,8 +79,8 @@ def interpolate_vector(x1, x2, x, vector1, vector2):
     """
     if abs(x1 - x2) < 1e-3:
         return vector1
-    t = (x - x1) / (x2 - x1)  # slope of linear interpolation
-    vector = np.array(vector1 + t * (vector2 - vector1))
+    t = (x2 - x) / (x2 - x1)  # slope of linear interpolation
+    vector = np.array(t * vector1 + (1 - t) * vector2)
     vector /= la.norm(vector)
     return vector
 
@@ -190,8 +191,8 @@ def calculate_normals(vertices, face_indices):
 
     for face_index in face_indices:
         triangle = vertices[face_index]
-        triangle_side_AB = (triangle[1] - triangle[0]) / la.norm((triangle[1] - triangle[0]))
-        triangle_side_AC = (triangle[2] - triangle[0]) / la.norm((triangle[2] - triangle[0]))
+        triangle_side_AB = (triangle[0] - triangle[1]) / la.norm((triangle[0] - triangle[1]))
+        triangle_side_AC = (triangle[0] - triangle[2]) / la.norm((triangle[0] - triangle[2]))
         triangle_normal_vector = np.cross(triangle_side_AC, triangle_side_AB)
         N_vectors[face_index] += triangle_normal_vector
 

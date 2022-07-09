@@ -38,7 +38,8 @@ def shade_gouraud(lighting, vertice_positions, vertice_normal_vectors, vertice_c
     vertice_colors[2] = get_color(lighting, barycentre_coords, vertice_normal_vectors[2], vertice_colors[2], cam_pos,
                                   ka, kd, ks, n, light_positions, light_intensities, Ia)
 
-    if np.all(vertice_positions[0, 0] == vertice_positions[:, 0]) and np.all(vertice_positions[:, 1] == vertice_positions[0, 1]):
+    if np.all(vertice_positions[0, 0] == vertice_positions[:, 0]) and np.all(
+            vertice_positions[:, 1] == vertice_positions[0, 1]):
         return img
 
     if len(np.unique(vertice_positions, axis=0)) < 3:
@@ -138,13 +139,6 @@ def shade_phong(lighting, vertice_positions, vertice_normal_vectors, vertice_col
         A triangle filled with color
     """
 
-    if np.all(vertice_positions[0, 0] == vertice_positions[:, 0]) and \
-            np.all(vertice_positions[:, 1] == vertice_positions[0, 1]):
-        return img
-
-    if len(np.unique(vertice_positions, axis=0)) < 3:
-        return img
-
     # Initialize Edge elements
     Edge1 = Edge("AB", np.array([vertice_positions[0, :], vertice_positions[1, :]]),
                  np.array([vertice_colors[0, :], vertice_colors[1, :]]),
@@ -176,10 +170,10 @@ def shade_phong(lighting, vertice_positions, vertice_normal_vectors, vertice_col
                 active_edges.append(i)
             else:
                 horizontal_line = True
-
     # Act based on active edge findings
     if len(active_edges) < 2:
         return img
+
     if not horizontal_line:
         for i in range(len(vertice_positions)):
             if vertice_positions[i, 1] == y_min:
@@ -187,7 +181,12 @@ def shade_phong(lighting, vertice_positions, vertice_normal_vectors, vertice_col
                 x1 = vertice_positions[i, 0]
                 x2 = x1
         if 0 <= x1 <= img.shape[0] - 1 and 0 <= y_min <= img.shape[1] - 1:
-            img[int(math.floor(x1 + 0.5)), int(math.floor(y_min + 0.5))] = vertice_colors[index, :]
+            img[int(math.floor(x1 + 0.5)), int(math.floor(y_min))] = get_color(lighting, barycentre_coords,
+                                                                                     vertice_normal_vectors[index, :],
+                                                                                     vertice_colors[index, :],
+                                                                                     cam_pos, ka, kd, ks, n,
+                                                                                     light_positions, light_intensities, Ia)
+            ...
     else:
         x1, x2, C1, C2, n1, n2 = find_initial_elements(edges, active_edges)
         for x in range(x1, x2 + 1):
@@ -198,18 +197,18 @@ def shade_phong(lighting, vertice_positions, vertice_normal_vectors, vertice_col
                                           ka, kd, ks, n, light_positions, light_intensities, Ia)
 
     # Begin Scanline Algorithm
-    for y in range(y_min + 1, y_max + 1):
-        if edges[active_edges[0]].slope != float('inf'):
+    for y in range(y_min+1, y_max + 1):
+        if edges[active_edges[0]].slope != 0:
             x1 = x1 + 1 / edges[active_edges[0]].slope
-        if edges[active_edges[1]].slope != float('inf'):
+        if edges[active_edges[1]].slope != 0:
             x2 = x2 + 1 / edges[active_edges[1]].slope
 
         normal_vector_1 = interpolate_vector(edges[active_edges[0]].y_min, edges[active_edges[0]].y_max, y,
-                                             edges[active_edges[0]].normal_vectors[0, :],
-                                             edges[active_edges[0]].normal_vectors[1, :])
+                                             edges[active_edges[0]].normal_vectors[0],
+                                             edges[active_edges[0]].normal_vectors[1])
         normal_vector_2 = interpolate_vector(edges[active_edges[1]].y_min, edges[active_edges[1]].y_max, y,
-                                             edges[active_edges[1]].normal_vectors[0, :],
-                                             edges[active_edges[1]].normal_vectors[1, :])
+                                             edges[active_edges[1]].normal_vectors[0],
+                                             edges[active_edges[1]].normal_vectors[1])
 
         color_A = interpolate_color(edges[active_edges[0]].y_min, edges[active_edges[0]].y_max, y,
                                     edges[active_edges[0]].colors[0, :], edges[active_edges[0]].colors[1, :])
