@@ -58,8 +58,8 @@ def specular_light(P, N, color, cam_pos, ks, n, light_positions, light_intensiti
     """
 
     V = (cam_pos - P) / la.norm((cam_pos - P))
-    L = (P - light_positions) / la.norm(P - light_positions)
-    LN_inner_product = np.dot(-N.T, L.T)
+    L = (light_positions - P) / la.norm(light_positions - P)
+    LN_inner_product = np.dot(N.T, L.T)
     angle = np.dot(2 * N.T * LN_inner_product - L, V) ** n
     I_lambda = light_intensities * ks * angle
     return np.multiply(color, I_lambda).reshape(3,)
